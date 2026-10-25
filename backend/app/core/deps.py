@@ -46,3 +46,20 @@ def get_current_user(
 
 CurrentUser = Annotated[UserResponse, Depends(get_current_user)]
 DbSession = Annotated[Session, Depends(get_db)]
+
+
+def get_admin_user(current_user: CurrentUser) -> UserResponse:
+    """Return the current user only if they have the admin role.
+
+    Raises HTTP 403 for any authenticated non-admin caller.
+    Depends on get_current_user, so 401 is still raised for unauthenticated requests.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return current_user
+
+
+AdminUser = Annotated[UserResponse, Depends(get_admin_user)]

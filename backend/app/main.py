@@ -4,7 +4,14 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.auth.router import router as auth_router
-from app.core.exceptions import InvalidCredentials, UserAlreadyExists
+from app.core.exceptions import (
+    InvalidCredentials,
+    OutOfStock,
+    UserAlreadyExists,
+    VehicleNotFound,
+)
+from app.inventory.router import router as inventory_router
+from app.vehicles.router import router as vehicles_router
 
 
 def create_app() -> FastAPI:
@@ -14,6 +21,7 @@ def create_app() -> FastAPI:
     """
     app = FastAPI(title="Car Dealership Inventory API", version="0.1.0")
 
+    # ------------------------------------------------------------------ auth
     @app.exception_handler(UserAlreadyExists)
     async def _user_already_exists(request: Request, exc: UserAlreadyExists) -> JSONResponse:
         return JSONResponse(status_code=409, content={"detail": "Email already registered"})
@@ -22,6 +30,17 @@ def create_app() -> FastAPI:
     async def _invalid_credentials(request: Request, exc: InvalidCredentials) -> JSONResponse:
         return JSONResponse(status_code=401, content={"detail": "Invalid credentials"})
 
+    # --------------------------------------------------------------- vehicles
+    @app.exception_handler(VehicleNotFound)
+    async def _vehicle_not_found(request: Request, exc: VehicleNotFound) -> JSONResponse:
+        return JSONResponse(status_code=404, content={"detail": "Vehicle not found"})
+
+    @app.exception_handler(OutOfStock)
+    async def _out_of_stock(request: Request, exc: OutOfStock) -> JSONResponse:
+        return JSONResponse(status_code=409, content={"detail": "Insufficient stock"})
+
     app.include_router(auth_router)
+    app.include_router(vehicles_router)
+    app.include_router(inventory_router)
 
     return app

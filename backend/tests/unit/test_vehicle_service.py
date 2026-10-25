@@ -112,14 +112,14 @@ def test_get_raises_vehicle_not_found_for_unknown_id(service: VehicleService) ->
 def test_update_returns_updated_vehicle(service: VehicleService) -> None:
     vehicle = service.create(**_DEFAULTS)  # type: ignore[arg-type]
 
-    updated = service.update(vehicle.id, make="Honda")  # type: ignore[arg-type]
+    updated = service.update(vehicle.id, make="Honda")
 
     assert updated.make == "Honda"
 
 
 def test_update_raises_vehicle_not_found_for_unknown_id(service: VehicleService) -> None:
     with pytest.raises(VehicleNotFound):
-        service.update(999, make="Honda")  # type: ignore[arg-type]
+        service.update(999, make="Honda")
 
 
 def test_delete_raises_vehicle_not_found_for_unknown_id(service: VehicleService) -> None:

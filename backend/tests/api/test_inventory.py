@@ -18,7 +18,9 @@ def test_purchase_returns_200_and_decreases_quantity(
     )
 
     assert resp.status_code == 200
-    assert resp.json()["quantity"] == int(created_vehicle["quantity"]) - 2  # type: ignore[arg-type]
+    initial_qty = created_vehicle["quantity"]
+    assert isinstance(initial_qty, int)
+    assert resp.json()["quantity"] == initial_qty - 2
 
 
 def test_purchase_returns_409_when_out_of_stock(
@@ -49,7 +51,9 @@ def test_restock_returns_200_for_admin(
     )
 
     assert resp.status_code == 200
-    assert resp.json()["quantity"] == int(created_vehicle["quantity"]) + 10  # type: ignore[arg-type]
+    initial_qty = created_vehicle["quantity"]
+    assert isinstance(initial_qty, int)
+    assert resp.json()["quantity"] == initial_qty + 10
 
 
 def test_restock_returns_403_for_customer(

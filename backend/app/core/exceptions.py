@@ -15,3 +15,11 @@ class InvalidCredentials(Exception):  # noqa: N818
 
 class InvalidToken(Exception):  # noqa: N818
     """Raised by TokenService when a JWT cannot be decoded or has expired."""
+
+
+class VehicleNotFound(Exception):  # noqa: N818
+    """Raised when a vehicle with the requested id does not exist."""
+
+
+class OutOfStock(Exception):  # noqa: N818
+    """Raised when a purchase cannot be fulfilled due to insufficient stock."""

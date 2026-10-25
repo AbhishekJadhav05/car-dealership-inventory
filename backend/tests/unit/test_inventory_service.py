@@ -32,7 +32,7 @@ def _seed(repo: InMemoryVehicleRepository, quantity: int = 5) -> int:
         category=Category.sedan,
         price=Decimal("25000.00"),
         quantity=quantity,
-    ).id  # type: ignore[return-value]
+    ).id
 
 
 # ---------------------------------------------------------------------------
