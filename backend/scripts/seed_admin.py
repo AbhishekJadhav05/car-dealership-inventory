@@ -16,17 +16,13 @@ def seed_admin() -> None:
     password = os.environ.get("ADMIN_PASSWORD", "")
 
     if not email or not password:
-        sys.exit(
-            "Set ADMIN_EMAIL and ADMIN_PASSWORD before running this script."
-        )
+        sys.exit("Set ADMIN_EMAIL and ADMIN_PASSWORD before running this script.")
 
     if len(password) < 12:
         sys.exit("ADMIN_PASSWORD must contain at least 12 characters.")
 
     with Session(_get_engine()) as session:
-        existing_user = session.scalar(
-            select(User).where(User.email == email)
-        )
+        existing_user = session.scalar(select(User).where(User.email == email))
 
         if existing_user is not None:
             if existing_user.role == Role.admin:
