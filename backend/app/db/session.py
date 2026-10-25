@@ -21,16 +21,16 @@ def _get_engine() -> Engine:
 
 
 def get_db() -> Generator[Session, None, None]:
-    """Yield a SQLAlchemy session and commit on success, roll back on error.
+    """Yield a SQLAlchemy session and roll back on error.
 
-    FastAPI calls this as a generator dependency for every request.  Tests
-    override it via app.dependency_overrides so the real engine is never
-    touched during the test suite.
+    Handlers commit explicitly before returning, so the response is never sent
+    before the data is committed.  FastAPI calls this as a generator dependency
+    for every request.  Tests override it via app.dependency_overrides so the
+    real engine is never touched during the test suite.
     """
     with Session(_get_engine()) as session:
         try:
             yield session
-            session.commit()
         except Exception:
             session.rollback()
             raise

@@ -1,7 +1,8 @@
 """Vehicles router: CRUD and search endpoints.
 
 All endpoints require authentication.  DELETE is additionally restricted to
-admins via the AdminUser dependency.
+admins via the AdminUser dependency.  Write endpoints commit explicitly before
+returning so the data is durable before the response is sent.
 """
 
 from decimal import Decimal
@@ -29,6 +30,7 @@ VehicleServiceDep = Annotated[VehicleService, Depends(_build_service)]
 def create_vehicle(
     body: VehicleRequest,
     service: VehicleServiceDep,
+    session: DbSession,
     _auth: CurrentUser,
 ) -> VehicleResponse:
     vehicle = service.create(
@@ -38,6 +40,8 @@ def create_vehicle(
         price=body.price,
         quantity=body.quantity,
     )
+    session.commit()
+    session.refresh(vehicle)
     return VehicleResponse.model_validate(vehicle)
 
 
@@ -67,6 +71,7 @@ def update_vehicle(
     vehicle_id: int,
     body: VehicleRequest,
     service: VehicleServiceDep,
+    session: DbSession,
     _auth: CurrentUser,
 ) -> VehicleResponse:
     vehicle = service.update(
@@ -77,6 +82,8 @@ def update_vehicle(
         price=body.price,
         quantity=body.quantity,
     )
+    session.commit()
+    session.refresh(vehicle)
     return VehicleResponse.model_validate(vehicle)
 
 
@@ -84,7 +91,9 @@ def update_vehicle(
 def delete_vehicle(
     vehicle_id: int,
     service: VehicleServiceDep,
+    session: DbSession,
     _auth: AdminUser,
 ) -> None:
     """Delete a vehicle. Admin only."""
     service.delete(vehicle_id)
+    session.commit()

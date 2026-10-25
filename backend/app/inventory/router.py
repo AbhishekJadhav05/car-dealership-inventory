@@ -1,4 +1,8 @@
-"""Inventory router: purchase and restock endpoints."""
+"""Inventory router: purchase and restock endpoints.
+
+Both endpoints commit explicitly before returning so the data is durable
+before the response is sent.
+"""
 
 from typing import Annotated
 
@@ -24,10 +28,13 @@ def purchase(
     vehicle_id: int,
     body: QuantityRequest,
     service: InventoryServiceDep,
+    session: DbSession,
     _auth: CurrentUser,
 ) -> VehicleResponse:
     """Purchase a quantity of a vehicle. Any authenticated user."""
     vehicle = service.purchase(vehicle_id, quantity=body.quantity)
+    session.commit()
+    session.refresh(vehicle)
     return VehicleResponse.model_validate(vehicle)
 
 
@@ -36,8 +43,11 @@ def restock(
     vehicle_id: int,
     body: QuantityRequest,
     service: InventoryServiceDep,
+    session: DbSession,
     _auth: AdminUser,
 ) -> VehicleResponse:
     """Restock a vehicle. Admin only."""
     vehicle = service.restock(vehicle_id, quantity=body.quantity)
+    session.commit()
+    session.refresh(vehicle)
     return VehicleResponse.model_validate(vehicle)
