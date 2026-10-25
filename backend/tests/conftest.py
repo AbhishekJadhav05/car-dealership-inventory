@@ -2,7 +2,9 @@
 
 The test engine uses TEST_DATABASE_URL when set (local development, so the
 dev database is left untouched) and falls back to DATABASE_URL for CI, where
-that variable already points at the dealership_test database.
+that variable already points at the dealership_test database.  As a safety
+net, the fallback is refused unless the database name ends with "_test",
+because this fixture drops tables and runs a downgrade at teardown.
 
 Tables are created via Alembic (the same path as production) rather than
 Base.metadata.create_all so that migration tests can verify round-trips
@@ -18,6 +20,7 @@ from collections.abc import Generator
 import pytest
 from alembic.config import Config
 from sqlalchemy import Engine, create_engine, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 
 from alembic import command
@@ -52,6 +55,13 @@ def test_engine() -> Generator[Engine, None, None]:
         from app.core.config import get_settings
 
         url = get_settings().database_url
+        db_name = make_url(url).database or ""
+        if not db_name.endswith("_test"):
+            pytest.exit(
+                f"Refusing to run tests against '{db_name}': it would drop tables. "
+                "Set TEST_DATABASE_URL to a dedicated *_test database.",
+                returncode=2,
+            )
 
     engine = create_engine(url)
     _clean_db(engine)
@@ -65,8 +75,14 @@ def test_engine() -> Generator[Engine, None, None]:
 
 @pytest.fixture()
 def db_session(test_engine: Engine) -> Generator[Session, None, None]:
-    """Transaction-scoped session that rolls back after each test."""
-    with Session(test_engine) as session:
-        session.begin()
+    """Session inside an outer transaction; commit() only releases a savepoint,
+    and everything is rolled back after each test."""
+    connection = test_engine.connect()
+    transaction = connection.begin()
+    session = Session(bind=connection, join_transaction_mode="create_savepoint")
+    try:
         yield session
-        session.rollback()
+    finally:
+        session.close()
+        transaction.rollback()
+        connection.close()

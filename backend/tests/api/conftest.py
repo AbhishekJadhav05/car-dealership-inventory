@@ -1,8 +1,8 @@
 """Fixtures for API (end-to-end) tests.
 
-All fixtures share one rolled-back session per test so data created by
-helper fixtures (e.g. admin_headers) is visible to the TestClient without
-being committed to the database.
+All fixtures share one session per test, bound to a connection whose outer
+transaction is rolled back at the end.  Handlers call session.commit(), which
+only releases a savepoint, so data created during a test never persists.
 """
 
 from collections.abc import Generator
@@ -23,11 +23,16 @@ _PASSWORD = "Pass123!"
 
 @pytest.fixture()
 def db_session(test_engine: Engine) -> Generator[Session, None, None]:
-    """Transaction-scoped session shared by the client and all helper fixtures."""
-    with Session(test_engine) as session:
-        session.begin()
+    """Session inside an outer transaction; commit() only releases a savepoint."""
+    connection = test_engine.connect()
+    transaction = connection.begin()
+    session = Session(bind=connection, join_transaction_mode="create_savepoint")
+    try:
         yield session
-        session.rollback()
+    finally:
+        session.close()
+        transaction.rollback()
+        connection.close()
 
 
 @pytest.fixture()
