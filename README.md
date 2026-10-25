@@ -282,11 +282,3 @@ GitHub Actions runs on every push and pull request that touches
 Test and coverage reports are uploaded as workflow artifacts on every
 run.
 
-## My AI Usage
-### Tools Used
-
-I used and Claude (Chat and agent) as AI-assisted development tools throughout this project.
-
-I used AI to help explore the application architecture, evaluate implementation approaches, write unit and integration tests, implement backend functionality, and debug issues encountered during development. I also used it to discuss design decisions, improve code organization, and understand errors during local testing.
-
-chats : https://claude.ai/share/cc52d893-bf76-46b8-911a-2a5c08a7ac7b
